@@ -252,7 +252,15 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:#0f0a1e
       <span class="mb-arr">&#x203A;</span>
     </button>
 
-    <button class="menu-btn mb-sky" onclick="irAMateriales()">
+          <button class="menu-btn mb-amber" onclick="irCambioHorarioVol()">
+        <span class="mb-icon">&#x1F504;</span>
+        <div class="mb-text">
+          <span class="mb-title">Cambiar grupo</span>
+          <span class="mb-desc">Si una familia te solicita cambio de horario</span>
+        </div>
+        <span class="mb-arr">&#x203A;</span>
+      </button>
+      <button class="menu-btn mb-sky" onclick="irAMateriales()">
       <span class="mb-icon">&#x1F4E6;</span>
       <div class="mb-text">
         <span class="mb-title">Materiales del PPS</span>
@@ -771,7 +779,32 @@ var coordCache = {};
 /* ── UTILS ──────────────────────────────────────────────────── */
 function show(id){document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});document.getElementById(id).classList.add('active');window.scrollTo(0,0);}
 function okRow(l,v){return '<div class="ok-row"><span class="ok-lbl">'+l+'</span><span class="ok-val">'+v+'</span></div>';}
-function getMiPPS(){if(!volActual)return'RUIL';for(var i=0;i<volActual.grupos.length;i++){var p=PPS_MAP[volActual.grupos[i]];if(p)return p;}return'RUIL';}
+function getMiPPS(){
+  if(!volActual)return'RUIL';
+  if(volActual.pps && volActual.pps!=='TODOS'){
+    // Return first PPS for single-PPS operations
+    return volActual.pps.split(',')[0].trim()||'RUIL';
+  }
+  if(volActual.pps==='TODOS')return'RUIL';
+  for(var i=0;i<volActual.grupos.length;i++){var p=PPS_MAP[volActual.grupos[i]];if(p)return p;}
+  return'RUIL';
+}
+function getMisPPS(){
+  // Returns ARRAY of all PPS for this volunteer (supports multi-PPS)
+  if(!volActual)return['RUIL'];
+  if(volActual.pps==='TODOS')return Object.keys(PPS_SECTS);
+  if(volActual.pps) return volActual.pps.split(',').map(function(p){return p.trim();}).filter(Boolean);
+  var pps=getMiPPS(); return [pps];
+}
+function getMisPPS(){
+  // Returns array of all PPS for this volunteer
+  if(!volActual)return['RUIL'];
+  if(volActual.pps==='TODOS')return['CCJ','CMAP','RUIL'];
+  if(volActual.pps){
+    return volActual.pps.split(',').map(function(p){return p.trim();}).filter(Boolean);
+  }
+  var pps=getMiPPS();return pps?[pps]:['RUIL'];
+}
 
 /* ── LOGIN ──────────────────────────────────────────────────── */
 function login(){
@@ -788,7 +821,8 @@ function login(){
     volActual=d;
     document.getElementById('menuNombre').textContent='Hola, '+d.nombre+' ';
     document.getElementById('menuGrupos').textContent=d.rol==='coordinador'?'Acceso coordinador — todos los grupos':'Grupos: '+d.grupos.join(', ');
-    document.getElementById('menuRol').textContent=d.rol==='coordinador'?' Coordinador JM 2026':'';
+    var ppsDisplay=d.pps==='TODOS'?'Todos los PPS':(d.pps||'');
+    document.getElementById('menuRol').textContent=(d.rol==='coordinador'?'Coordinador JM 2026':(ppsDisplay?'PPS: '+ppsDisplay:''))+' · '+d.grupos.length+' grupos';
     var sel=document.getElementById('permisoGrupo');sel.innerHTML='';
     d.grupos.forEach(function(g){var o=document.createElement('option');o.value=g;o.textContent=g;sel.appendChild(o);});
     var showCoord=d.rol==='coordinador';
