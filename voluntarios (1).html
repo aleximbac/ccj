@@ -243,10 +243,10 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:#0f0a1e
       <span class="mb-arr">&#x203A;</span>
     </button>
 
-    <button class="menu-btn mb-violet" onclick="irAMinga()">
+    <button class="menu-btn mb-violet" onclick="irSeccionMingas()">
       <span class="mb-icon">&#x1F9F9;</span>
       <div class="mb-text">
-        <span class="mb-title">Programar minga</span>
+        <span class="mb-title">Mingas</span>
         <span class="mb-desc">El sistema elige las familias autom&#xE1;ticamente</span>
       </div>
       <span class="mb-arr">&#x203A;</span>
@@ -384,10 +384,59 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:#0f0a1e
 </div>
 
 <!-- ══ MINGA ════════════════════════════════════════════════ -->
-<div class="view" id="v-minga">
+<div class="view" id="v-minga-hub">
   <div class="sec-hdr">
     <button class="back-btn" onclick="show('v-menu')">&#x2039;</button>
-    <span class="sec-title">Programar minga</span>
+    <span class="sec-title">Mingas</span>
+    <span class="sec-icon">&#x1F9F9;</span>
+  </div>
+  <div class="vbody">
+    <button class="menu-btn mb-violet" onclick="irMinga()" style="border-radius:16px;margin-bottom:16px">
+      <span class="mb-icon">&#x2795;</span>
+      <div class="mb-text">
+        <span class="mb-title">Crear nueva minga</span>
+        <span class="mb-desc">Elegir PPS, número de familias y generar lista</span>
+      </div>
+      <span class="mb-arr">&#x203A;</span>
+    </button>
+    <p style="font-size:11px;font-weight:900;color:#9ca3af;letter-spacing:.8px;margin-bottom:10px">MINGAS CREADAS — TOCA PARA MARCAR ASISTENCIA</p>
+    <div id="mingaHubLista">
+      <div class="spin-wrap" style="min-height:auto;padding:20px 0">
+        <div class="spinner"></div>
+        <p>Cargando mingas...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MINGAS HUB ═══════════════════════════════════════════════ -->
+<div class="view" id="v-mingas-hub">
+  <div class="sec-hdr">
+    <button class="back-btn" onclick="show('v-menu')">&lsaquo;</button>
+    <span class="sec-title">Mingas</span>
+    <span class="sec-icon">&#x1F9F9;</span>
+  </div>
+  <div class="vbody">
+    <!-- Crear nueva -->
+    <button onclick="irMinga()" style="width:100%;padding:16px;background:linear-gradient(135deg,#4c1d95,#7c3aed);border:none;border-radius:16px;color:#fff;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:12px;margin-bottom:16px;box-shadow:0 6px 20px rgba(91,33,182,.3)">
+      <span style="font-size:26px">&#x2795;</span>
+      <div style="text-align:left;flex:1">
+        <div style="font-size:15px;font-weight:900">Crear nueva minga</div>
+        <div style="font-size:11px;opacity:.8;margin-top:2px">Elegir PPS, sectores y generar lista</div>
+      </div>
+      <span style="font-size:20px;opacity:.6">&#x203A;</span>
+    </button>
+    <p style="font-size:12px;font-weight:900;color:#9ca3af;letter-spacing:.6px;margin-bottom:10px">MINGAS CREADAS — TOCA PARA MARCAR ASISTENCIA</p>
+    <div id="mingasHubLista">
+      <div class="spin-wrap" style="min-height:120px"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="view" id="v-minga">
+  <div class="sec-hdr">
+    <button class="back-btn" onclick="irMingaHub()">&#x2039;</button>
+    <span class="sec-title">Crear minga</span>
     <span class="sec-icon">&#x1F9F9;</span>
   </div>
   <div class="vbody">
@@ -1495,6 +1544,359 @@ function confirmarCambioVoluntario(){
   document.body.appendChild(sc);
   setTimeout(function(){if(window[cb]){delete window[cb];show('v-cambio-horario-sel');}},8000);
 }
+
+
+// ══ MINGA HUB ═══════════════════════════════════════════════════
+function irMingaHub() {
+  show('v-minga-hub');
+  cargarMingasHub();
+}
+
+function cargarMingasHub() {
+  document.getElementById('mingaHubLista').innerHTML =
+    '<div class="spin-wrap" style="min-height:auto;padding:20px 0"><div class="spinner"></div><p>Cargando...</p></div>';
+  var cb = 'cb_mhub_' + Date.now();
+  window[cb] = function(d) {
+    delete window[cb];
+    var sc = document.getElementById('jsc_mhub'); if(sc) sc.parentNode.removeChild(sc);
+    renderMingasHub(d.rows || []);
+  };
+  var sc = document.createElement('script'); sc.id = 'jsc_mhub';
+  sc.src = SCRIPT + '?exportMingas=1&callback=' + cb;
+  sc.onerror = function() {
+    document.getElementById('mingaHubLista').innerHTML =
+      '<div class="al al-red" style="display:block">Sin conexión. Verifica tu red.</div>';
+  };
+  document.body.appendChild(sc);
+  setTimeout(function() { if(window[cb]) { delete window[cb]; sc.onerror(); } }, 8000);
+}
+
+function renderMingasHub(rows) {
+  var cont = document.getElementById('mingaHubLista');
+  cont.innerHTML = '';
+  var data = rows.slice(1); // skip header
+  if (!data.length) {
+    cont.innerHTML = '<div style="text-align:center;padding:24px;font-size:13px;font-weight:700;color:#9ca3af">Sin mingas registradas.<br>Toca <strong style="color:#5b21b6">Crear nueva minga</strong>.</div>';
+    return;
+  }
+  // Sort: pendientes primero
+  data.sort(function(a,b) {
+    return ((String(a[7]||'-')==='-')?0:1) - ((String(b[7]||'-')==='-')?0:1);
+  });
+  data.slice(0,20).forEach(function(r) {
+    var mId=String(r[0]),fecha=String(r[1]),hora=String(r[2]),lugar=String(r[3]);
+    var vol=String(r[4]),conv=Number(r[5])||0,asist=Number(r[6])||0,pct=String(r[7]||'-');
+    var isPend = pct==='-'||pct==='';
+    var pctNum = isPend ? 0 : parseInt(pct);
+    var col = pctNum>=70?'#059669':pctNum>=40?'#d97706':'#dc2626';
+    var card = document.createElement('div');
+    card.className = 'fam-item';
+    card.style.cursor = 'pointer';
+    card.innerHTML =
+      '<div class="fam-num" style="background:'+(isPend?'#5b21b6':'#059669');
+    card.innerHTML +=
+      ';font-size:20px;width:36px;height:36px">'+(isPend?'&#x1F9F9;':'&#x2705;')+'</div>'
+      +'<div style="flex:1">'
+      +'<div class="fam-name">'+lugar+'</div>'
+      +'<div class="fam-info" style="color:#6b7280">'+fecha+' · '+hora+'</div>'
+      +'<div class="fam-meta">Creada por: '+vol+'</div>'
+      +'<div style="margin-top:6px">'
+      +'<span style="background:'+(isPend?'#faf5ff':'#f0fdf4')+';color:'+(isPend?'#5b21b6':col)+';padding:3px 10px;border-radius:20px;font-size:11px;font-weight:900">'
+      +(isPend?'⏳ Pendiente · '+conv+' convocadas':'✅ '+asist+'/'+conv+' ('+pct+')')
+      +'</span>'
+      +'<span style="background:#fef2f2;color:#dc2626;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;margin-left:6px">Marcar / editar ›</span>'
+      +'</div></div>';
+    card.onclick = (function(mid,fd,hr,lu){ return function(){ reAbrirMinga(mid,fd,hr,lu); }; })(mId,fecha,hora,lugar);
+    cont.appendChild(card);
+  });
+}
+
+function reAbrirMinga(mId, fecha, hora, lugar) {
+  show('v-cargando');
+  var cb = 'cb_reab_' + Date.now();
+  window[cb] = function(d) {
+    delete window[cb];
+    var sc = document.getElementById('jsc_reab'); if(sc) sc.parentNode.removeChild(sc);
+    mingaActual = {id:mId, fecha:fecha, hora:hora, lugarLabel:lugar, cuantas:0};
+    var conv = d.minga ? (d.minga.convocados||[]) : [];
+    mingaConvocados = conv.map(function(c){
+      var sF = FAMILIAS[c.sector]||[];
+      var fD = sF.find(function(f){return f.fam===c.fam;});
+      return {fam:c.fam, rep:fD?fD.rep:(c.rep||'Familia'), sector:c.sector,
+              tel:fD?(fD.tel||''):(c.tel||''), hijos:fD?(fD.hijos||[]):[]};
+    });
+    irMarcarAsistMinga();
+  };
+  var sc = document.createElement('script'); sc.id = 'jsc_reab';
+  sc.src = SCRIPT + '?getMingaConvocados=1&minga_id=' + encodeURIComponent(mId) + '&callback=' + cb;
+  sc.onerror = function() {
+    // Allow marking attendance even without prior data
+    mingaActual = {id:mId, fecha:fecha, hora:hora, lugarLabel:lugar, cuantas:0};
+    mingaConvocados = [];
+    irMarcarAsistMinga();
+  };
+  document.body.appendChild(sc);
+  setTimeout(function() { if(window[cb]) { delete window[cb]; sc.onerror(); } }, 8000);
+}
+
+// ── Override irMarcarAsistMinga to show apadrinados names ──────
+var _origIrMarcarAsistMinga = irMarcarAsistMinga;
+irMarcarAsistMinga = function() {
+  mingaAsist = {};
+  var fechaD = '';
+  try { fechaD = new Date(mingaActual.fecha+'T00:00:00').toLocaleDateString('es-EC',{weekday:'long',month:'long',day:'numeric'}); }
+  catch(e) { fechaD = mingaActual.fecha; }
+  document.getElementById('mingaAsistInfo').textContent = mingaActual.lugarLabel+' · '+fechaD+' · '+mingaActual.hora;
+  var lista = document.getElementById('mingaAsistLista'); lista.innerHTML = '';
+  var cntEl = document.getElementById('mingaAsistCount'), totEl = document.getElementById('mingaAsistTotal');
+  if(cntEl) cntEl.textContent = '0';
+  if(totEl) totEl.textContent = 'de '+(mingaConvocados.length)+' convocadas';
+  mingaConvocados.forEach(function(f,i){
+    var hijos = (f.hijos||[]).map(function(h){return h.split(' ').slice(0,2).join(' ');}).join(', ');
+    var div = document.createElement('div');
+    div.className = 'fam-item'; div.style.cursor='pointer';
+    div.dataset.idx = i;
+    div.innerHTML =
+      '<div class="fam-num" id="mav'+i+'">'+( i+1)+'</div>'
+      +'<div style="flex:1">'
+      +'<div class="fam-name">'+(f.rep||'Familia')+'</div>'
+      +(hijos?'<div class="fam-info">&#x1F476; '+hijos+'</div>':'')
+      +'<div class="fam-meta">S-'+f.sector+'</div>'
+      +'</div>'
+      +'<span class="mchk" id="mchk'+i+'" style="font-size:22px">⬜</span>';
+    div.onclick = (function(idx,ff,dv){
+      return function(){
+        if(mingaAsist[ff.fam]){
+          delete mingaAsist[ff.fam];
+          document.getElementById('mav'+idx).style.background='#5b21b6';
+          document.getElementById('mav'+idx).style.color='#fff';
+          document.getElementById('mchk'+idx).textContent='⬜';
+          dv.style.borderColor='#f1f5f9'; dv.style.background='#fff';
+        } else {
+          mingaAsist[ff.fam]={fam:ff.fam,rep:ff.rep,sector:ff.sector};
+          document.getElementById('mav'+idx).style.background='#059669';
+          document.getElementById('mav'+idx).style.color='#fff';
+          document.getElementById('mchk'+idx).textContent='✅';
+          dv.style.borderColor='#059669'; dv.style.background='#f0fdf4';
+        }
+        var cnt=Object.keys(mingaAsist).length;
+        if(cntEl) cntEl.textContent=cnt;
+      };
+    })(i,f,div);
+    lista.appendChild(div);
+  });
+  if(!mingaConvocados.length) {
+    lista.innerHTML='<div class="al al-amber">No hay familias convocadas registradas. Puedes guardar de todas formas si asistieron familias no convocadas originalmente.</div>';
+  }
+  show('v-minga-asist');
+};
+
+
+// ══ MINGAS HUB ═══════════════════════════════════════════════════
+function irSeccionMingas() {
+  show('v-mingas-hub');
+  cargarMingasRecientes();
+}
+
+function cargarMingasRecientes() {
+  var cont = document.getElementById('mingasHubLista');
+  if (!cont) return;
+  cont.innerHTML = '<div class="spin-wrap" style="min-height:120px"><div class="spinner"></div></div>';
+  var cb = 'cb_mhub_' + Date.now();
+  window[cb] = function(d) {
+    delete window[cb];
+    var sc = document.getElementById('jsc_mhub'); if (sc) sc.parentNode.removeChild(sc);
+    renderMingasHubLista(d.rows || []);
+  };
+  var sc = document.createElement('script'); sc.id = 'jsc_mhub';
+  sc.src = SCRIPT + '?exportMingas=1&callback=' + cb;
+  sc.onerror = function() {
+    cont.innerHTML = '<div style="text-align:center;padding:20px;font-size:13px;font-weight:700;color:#9ca3af">Sin conexión. Revisa tu red.</div>';
+  };
+  document.body.appendChild(sc);
+  setTimeout(function() { if (window[cb]) { delete window[cb]; sc.onerror(); } }, 8000);
+}
+
+function renderMingasHubLista(rows) {
+  var cont = document.getElementById('mingasHubLista');
+  if (!cont) return;
+  cont.innerHTML = '';
+  var data = rows.slice(1); // skip header
+  if (!data.length) {
+    cont.innerHTML = '<div style="text-align:center;padding:24px;font-size:13px;font-weight:700;color:#9ca3af">Sin mingas registradas.<br>Toca <strong style="color:#5b21b6">Crear nueva minga</strong> para comenzar.</div>';
+    return;
+  }
+  // Sort: pendientes primero, luego por ID desc
+  data.sort(function(a, b) {
+    var ap = (String(a[7]||'-')==='-') ? 0 : 1;
+    var bp = (String(b[7]||'-')==='-') ? 0 : 1;
+    if (ap !== bp) return ap - bp;
+    return String(b[0]).localeCompare(String(a[0]));
+  });
+  data.slice(0, 20).forEach(function(r) {
+    var mId   = String(r[0]);
+    var fecha = String(r[1]);
+    var hora  = String(r[2]);
+    var lugar = String(r[3]);
+    var vol   = String(r[4]);
+    var conv  = Number(r[5]) || 0;
+    var asist = Number(r[6]) || 0;
+    var pct   = String(r[7] || '-');
+    var isPend = (pct === '-' || pct === '');
+    var pctNum = isPend ? 0 : parseInt(pct);
+    var pctCol = pctNum >= 70 ? '#059669' : pctNum >= 40 ? '#d97706' : '#dc2626';
+
+    var card = document.createElement('div');
+    card.className = 'minga-card';
+    card.innerHTML =
+      '<div style="display:flex;align-items:flex-start;gap:10px">'
+      + '<div style="font-size:28px;margin-top:2px">' + (isPend ? '&#x1F9F9;' : '&#x2705;') + '</div>'
+      + '<div style="flex:1">'
+      + '<div style="font-size:15px;font-weight:900;color:#111">' + lugar + '</div>'
+      + '<div style="font-size:12px;color:#6b7280;font-weight:700;margin-top:2px">' + fecha + ' · ' + hora + '</div>'
+      + '<div style="font-size:11px;color:#9ca3af;margin-top:1px">Creada por: ' + vol + '</div>'
+      + '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">'
+      + '<span style="background:' + (isPend ? '#faf5ff' : '#f0fdf4') + ';color:' + (isPend ? '#5b21b6' : pctCol)
+      + ';padding:4px 12px;border-radius:20px;font-weight:900;font-size:12px">'
+      + (isPend ? '&#x23F3; ' + conv + ' convocadas' : '&#x2705; ' + asist + '/' + conv + ' (' + pct + ')')
+      + '</span>'
+      + '<span style="background:#fef2f2;color:#dc2626;padding:4px 12px;border-radius:20px;font-weight:900;font-size:12px">Marcar / editar &#x203A;</span>'
+      + '</div>'
+      + '</div></div>';
+
+    card.onclick = (function(mid, fd, hr, lu) {
+      return function() { cargarParaMarcarAsist(mid, fd, hr, lu); };
+    })(mId, fecha, hora, lugar);
+
+    cont.appendChild(card);
+  });
+}
+
+function cargarParaMarcarAsist(mId, fecha, hora, lugar) {
+  show('v-cargando');
+  var cb = 'cb_mconv_' + Date.now();
+  window[cb] = function(d) {
+    delete window[cb];
+    var sc = document.getElementById('jsc_mconv'); if (sc) sc.parentNode.removeChild(sc);
+    var minga = d.minga || {};
+    var conv  = minga.convocados || [];
+    mingaId  = mId;
+    mingaAct = { fecha: fecha, hora: hora, lugarLabel: lugar, cuantas: 0, conv: conv.length, mat: '', fecha_raw: fecha };
+    mingaFams = conv.map(function(c) {
+      var sfams = FAMILIAS[c.sector] || [];
+      var fdata = sfams.find(function(f) { return f.fam === c.fam; });
+      return {
+        fam:    c.fam,
+        rep:    fdata ? fdata.rep  : (c.rep || 'Familia'),
+        sector: c.sector,
+        tel:    fdata ? (fdata.tel || '') : '',
+        hijos:  fdata ? (fdata.hijos || []) : []
+      };
+    });
+    irAsistMinga();
+  };
+  var sc = document.createElement('script'); sc.id = 'jsc_mconv';
+  sc.src = SCRIPT + '?getMingaConvocados=1&minga_id=' + encodeURIComponent(mId) + '&callback=' + cb;
+  sc.onerror = function() {
+    // Sin datos del servidor — igual abrir asistencia vacía para agregar manualmente
+    mingaId = mId;
+    mingaAct = { fecha: fecha, hora: hora, lugarLabel: lugar, cuantas: 0, conv: 0, mat: '', fecha_raw: fecha };
+    mingaFams = [];
+    irAsistMinga();
+  };
+  document.body.appendChild(sc);
+  setTimeout(function() { if (window[cb]) { delete window[cb]; sc.onerror(); } }, 8000);
+}
+
+
+// ══ LOG DE ACTIVIDAD COORDINADOR ═════════════════════════════════
+var logCache={mingas:null,cambios:null,seguimiento:null};
+var logFil='mingas';
+
+function filtrarLog(tipo,btn){
+  logFil=tipo;
+  document.querySelectorAll('.coord-log-tab').forEach(function(t){t.classList.remove('active');});
+  if(btn) btn.classList.add('active');
+  renderLog();
+}
+
+function cargarLog(){
+  // Load mingas
+  var cb1='cb_log1_'+Date.now();
+  window[cb1]=function(d){delete window[cb1];var sc=document.getElementById('jsc_log1');if(sc)sc.parentNode.removeChild(sc);logCache.mingas=d.rows||[];renderLog();};
+  var sc1=document.createElement('script');sc1.id='jsc_log1';
+  sc1.src=SCRIPT+'?exportMingas=1&callback='+cb1;
+  sc1.onerror=function(){logCache.mingas=[];renderLog();};
+  document.body.appendChild(sc1);
+  setTimeout(function(){if(window[cb1]){delete window[cb1];sc1.onerror();}},7000);
+  // Load stats
+  var cb2='cb_log2_'+Date.now();
+  window[cb2]=function(d){delete window[cb2];logCache.stats=d;renderLog();};
+  var sc2=document.createElement('script');sc2.id='jsc_log2';
+  sc2.src=SCRIPT+'?getStats=1&callback='+cb2;
+  sc2.onerror=function(){};
+  document.body.appendChild(sc2);
+  // Load casos
+  var cb3='cb_log3_'+Date.now();
+  window[cb3]=function(d){delete window[cb3];var sc=document.getElementById('jsc_log3');if(sc)sc.parentNode.removeChild(sc);logCache.seguimiento=d.casos||[];renderLog();};
+  var sc3=document.createElement('script');sc3.id='jsc_log3';
+  sc3.src=SCRIPT+'?getCasos=1&callback='+cb3;
+  sc3.onerror=function(){logCache.seguimiento=[];renderLog();};
+  document.body.appendChild(sc3);
+  setTimeout(function(){if(window[cb3]){delete window[cb3];sc3.onerror();}},7000);
+}
+
+function renderLog(){
+  var cont=document.getElementById('coordLog');
+  if(!cont)return;
+  if(logFil==='mingas'){
+    var rows=logCache.mingas;
+    if(!rows){cont.innerHTML='<div style="padding:10px;font-size:13px;color:#9ca3af;font-weight:700">Cargando...</div>';return;}
+    var data=rows.slice(1);
+    if(!data.length){cont.innerHTML='<div style="padding:10px;font-size:13px;color:#9ca3af;font-weight:700">Sin mingas</div>';return;}
+    cont.innerHTML='';
+    data.slice(0,6).reverse().forEach(function(r){
+      var pct=String(r[7]||'-');var isPend=(pct==='-'||pct==='');
+      var pctNum=isPend?0:parseInt(pct);
+      var col=pctNum>=70?'#059669':pctNum>=40?'#d97706':'#dc2626';
+      cont.innerHTML+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f3f4f6">'
+        +'<div style="font-size:18px">'+(isPend?'&#x1F9F9;':'&#x2705;')+'</div>'
+        +'<div style="flex:1"><div style="font-size:13px;font-weight:800;color:#111">'+String(r[3])+'</div>'
+        +'<div style="font-size:11px;color:#6b7280;font-weight:700">'+String(r[1])+' · '+String(r[5])+' conv.</div></div>'
+        +'<span style="background:'+(isPend?'#faf5ff':'#f0fdf4')+';color:'+(isPend?'#5b21b6':col)+';padding:3px 10px;border-radius:20px;font-size:11px;font-weight:900">'
+        +(isPend?'Pend.':pct)+'</span></div>';
+    });
+  } else if(logFil==='cambios'){
+    var stats=logCache.stats;
+    if(!stats){cont.innerHTML='<div style="padding:10px;font-size:13px;color:#9ca3af;font-weight:700">Cargando...</div>';return;}
+    cont.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+      +'<div style="background:#eff6ff;border-radius:12px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:900;color:#1d4ed8">'+(stats.cambios||0)+'</div><div style="font-size:11px;color:#1d4ed8;font-weight:700">Cambios horario</div></div>'
+      +'<div style="background:#f0f9ff;border-radius:12px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:900;color:#0891b2">'+(stats.contactos||0)+'</div><div style="font-size:11px;color:#0891b2;font-weight:700">Números actul.</div></div>'
+      +'<div style="background:#fffbeb;border-radius:12px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:900;color:#d97706">'+(stats.justificaciones||0)+'</div><div style="font-size:11px;color:#d97706;font-weight:700">Justificaciones</div></div>'
+      +'<div style="background:#faf5ff;border-radius:12px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:900;color:#5b21b6">608</div><div style="font-size:11px;color:#5b21b6;font-weight:700">Inscritos total</div></div>'
+      +'</div>';
+  } else if(logFil==='seguimiento'){
+    var casos=logCache.seguimiento;
+    if(!casos){cont.innerHTML='<div style="padding:10px;font-size:13px;color:#9ca3af;font-weight:700">Cargando...</div>';return;}
+    if(!casos.length){cont.innerHTML='<div style="padding:10px;font-size:13px;color:#059669;font-weight:700">Sin casos activos</div>';return;}
+    var cm={visitado:'#d97706',llamada:'#1d4ed8','sin-contacto':'#6b7280',pendiente:'#dc2626',resuelto:'#059669'};
+    cont.innerHTML='';
+    casos.slice(0,6).forEach(function(c){
+      cont.innerHTML+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f3f4f6">'
+        +'<div style="width:28px;height:28px;border-radius:8px;background:'+(cm[c.status]||'#dc2626')+';display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;color:#fff">&#x1F4CB;</div>'
+        +'<div style="flex:1"><div style="font-size:13px;font-weight:800;color:#111">'+c.nombre+'</div>'
+        +'<div style="font-size:11px;color:#6b7280;font-weight:700">'+c.grupo+' · '+c.ultima_accion+'</div></div>'
+        +'<span style="background:'+(cm[c.status]||'#f3f4f6')+'22;color:'+(cm[c.status]||'#6b7280')+';padding:3px 8px;border-radius:20px;font-size:10px;font-weight:900">'+c.status+'</span></div>';
+    });
+  }
+}
+
+// Override actualizarCoord to also load log
+var _baseActualizarCoord = actualizarCoord;
+actualizarCoord = function() {
+  _baseActualizarCoord();
+  cargarLog();
+};
 
 </script>
 </body>
