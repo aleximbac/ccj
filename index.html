@@ -734,9 +734,16 @@ document.getElementById('mingaInput').addEventListener('keydown',function(e){if(
 
 function cargarMinga(p){
   // Show persona card first, then load minga data
+  var ppsLabel=PPS_SECTOR_MAP_IDX[p.s]||'PPS asignado';
   document.getElementById('mingaPersona').innerHTML=
     '<div class="icard-row"><span class="icard-ico" style="font-size:22px;width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+p.n.charAt(0)+'</span>'
-    +'<div><div style="font-size:16px;font-weight:900;color:#111">'+p.n+'</div><div style="font-size:12px;color:#6b7280;font-weight:700;margin-top:1px">Sector '+p.s+'</div></div></div>';
+    +'<div><div style="font-size:16px;font-weight:900;color:#111">'+p.n+'</div>'
+    +'<div style="font-size:12px;color:#6b7280;font-weight:700;margin-top:1px">Sector '+p.s+'</div>'
+    +'<div style="font-size:12px;color:#5b21b6;font-weight:800;margin-top:3px">&#x1F3EB; Mingas en: '+ppsLabel+'</div>'
+    +'</div></div>'
+    +'<div style="background:#f5f3ff;border:1.5px solid #ddd6fe;border-radius:11px;padding:10px;margin-top:8px;font-size:12px;font-weight:700;color:#5b21b6;line-height:1.6">'
+    +'&#x1F4A1; Las mingas se realizan en el PPS más cercano a tu sector, para que los beneficios lleguen a tu comunidad. Si tienes dudas, consulta a tu voluntaria/o.'
+    +'</div>';
   document.getElementById('mingaPersona').style.display='block';
   document.getElementById('mingaHero').innerHTML='<div class="spin-wrap" style="padding:30px 0"><div class="spinner" style="width:36px;height:36px;border-top-color:#7c3aed"></div></div>';
   document.getElementById('mingaEstado').innerHTML='';
