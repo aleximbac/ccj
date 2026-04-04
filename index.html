@@ -554,7 +554,7 @@ function buscar(){
   var res=buscarEnData(q);
   renderResults('busqRes',res,'#7c3aed',function(p,i){_bi=i;mostrarInfo(p);});
 }
-document.getElementById('busqInput').addEventListener('keydown',function(e){if(e.key==='Enter')buscar();});
+document.getElementById('busqInput')&&document.getElementById('busqInput').addEventListener('keydown',function(e){if(e.key==='Enter')buscar();});
 
 function mostrarInfo(p){
   var g=GRUPOS.find(function(x){return x.g===p.g;})||{};
@@ -659,7 +659,7 @@ function buscarJust(){
   _jq=q;
   renderResults('justRes',buscarEnData(q),'#d97706',function(p,i){_ji=i;selJust(p);});
 }
-document.getElementById('justInput').addEventListener('keydown',function(e){if(e.key==='Enter')buscarJust();});
+document.getElementById('justInput')&&document.getElementById('justInput').addEventListener('keydown',function(e){if(e.key==='Enter')buscarJust();});
 
 function selJust(p){
   pJust=p;
@@ -675,7 +675,7 @@ function selJust(p){
   document.getElementById('errJust').style.display='none';
   show('v-just-form');
 }
-document.getElementById('justFecha').addEventListener('change',function(){document.getElementById('otraFechaDiv').style.display=this.value==='otra'?'block':'none';});
+if(document.getElementById("justFecha"))document.getElementById('justFecha')&&document.getElementById('justFecha').addEventListener('change',function(){document.getElementById('otraFechaDiv').style.display=this.value==='otra'?'block':'none';});
 
 function guardarJust(){
   var grp=document.getElementById('justGrupo').value,motivo=document.getElementById('justMotivo').value;
@@ -709,12 +709,12 @@ function guardarJust(){
 }
 
 function buscarMinga(){
-  var q=document.getElementById('mingaInput').value.trim();
+  var el=document.getElementById('mingaInput');if(!el)return;var q=el.value.trim();
   if(q.length<2){document.getElementById('mingaRes').innerHTML='<div class="empty"><em>&#x1F9F9;</em><p>Escribe al menos 2 letras</p></div>';return;}
   _mq=q;
   renderResults('mingaRes',buscarEnData(q),'#5b21b6',function(p,i){_mi=i;pMinga=p;cargarMinga(p);});
 }
-document.getElementById('mingaInput').addEventListener('keydown',function(e){if(e.key==='Enter')buscarMinga();});
+if(document.getElementById('mingaInput'))document.getElementById('mingaInput')&&document.getElementById('mingaInput').addEventListener('keydown',function(e){if(e.key==='Enter')buscarMinga();});
 
 function cargarMinga(p){
   // Show persona card first, then load minga data
@@ -811,7 +811,7 @@ function buscarCont(){
   _cq=q;
   renderResults('contRes',buscarEnData(q),'#0369a1',function(p,i){_ci=i;selCont(p,buscarEnData(q));});
 }
-document.getElementById('contInput').addEventListener('keydown',function(e){if(e.key==='Enter')buscarCont();});
+document.getElementById('contInput')&&document.getElementById('contInput').addEventListener('keydown',function(e){if(e.key==='Enter')buscarCont();});
 
 function selCont(p,todos){
   pCont=p;
@@ -860,7 +860,7 @@ function guardarCont(){
 function reiniciar(){
   pSel=null;gSel=null;edadR=null;pJust=null;pCont=null;famCont=[];pMinga=null;
   _bq='';_jq='';_cq='';_mq='';
-  ['busqInput','justInput','contInput','mingaInput','codigoInput','fechaNac'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['busqInput','justInput','contInput','codigoInput','fechaNac'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   show('v-home');
 }
 
